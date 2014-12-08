@@ -74,7 +74,7 @@ class Riak {
 
 		if( !stristr($this->headers,"200 OK") && !stristr($this->headers,"201 Created")) { 
 			$this->log("{$bldpur}>>>>: $method $url HTTP/1.0 ($type) POST_LENGTH:".strlen($post_data)."$txtrst \n");
-			if( $post_data && $type == 'application/json' ) printf("{$bldpur}POST_DATA: ".trim($post_data)."\n");
+			if( $post_data && $type == 'application/json' ) $this->log("{$bldpur}POST_DATA: ".trim($post_data)."\n");
 			$this->log("{$bldylw}<<<<: µT=".( $mend - $mstart )."{$txtrst}\n");
 			$this->log("{$bldylw}<<<<: H:".$this->headers."{$txtrst}");
 			$this->log("{$bldylw}<<<<: B:".$this->body."{$txtrst}");
