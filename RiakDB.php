@@ -4,6 +4,10 @@
 
 class Riak {
 
+    private $logEnabled = true;
+    private $logfile = '/var/log/riak.log';
+    private $syslogEnabled = true;
+
 	function Riak( $options ) {
 		$this->force_no_decode = false;	
 		$this->debug = false;	
@@ -14,11 +18,17 @@ class Riak {
 	}
 
 	function log( $logthis ) {
+        $message = "{$_SERVER['REMOTE_ADDR']} - ".$logthis;
 		if( $this->debug ) {
 			echo $logthis."\n";
-		} else {
-			@file_put_contents("/var/log/riak.log",date("Y-m-d H:i:s")." - ".$logthis."\n",FILE_APPEND);
 		}
+        if($this->logEnabled) {
+            file_put_contents($this->logfile, date("[Y-m-d H:i:s] ").$message."\n", FILE_APPEND);
+        }
+        if($this->syslogEnabled) {
+            openlog('RiakDB.PHP', LOG_ODELAY, LOG_LOCAL1);
+            syslog(LOG_INFO, $message);
+        }
 	}
 	
 	function send( $method, $url, $post_data = NULL, $type = 'application/json' ) {
