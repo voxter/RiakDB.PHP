@@ -1,6 +1,6 @@
 <?php
 
-
+require_once('RiakException.php');
 
 class Riak {
 
@@ -40,7 +40,7 @@ class Riak {
 		$s = fsockopen($this->host, $this->port, $errno, $errstr);
 		if(!$s) {
 			echo "$errno: $errstr\n";
-			return false;
+			throw new RiakException($errstr, $errno);
 		}
 
 		//$request = "$method $url HTTP/1.1\r\nHost: $this->host:$this->port\r\n";
@@ -82,12 +82,23 @@ class Riak {
 
 		}
 
-		if( !stristr($this->headers,"200 OK") && !stristr($this->headers,"201 Created")) { 
+		if( !stristr($this->headers,"200 OK") &&
+			!stristr($this->headers,"201 Created") &&
+			!stristr($this->headers,"204 No Content")) {
 			$this->log("{$bldpur}>>>>: $method $url HTTP/1.0 ($type) POST_LENGTH:".strlen($post_data)."$txtrst \n");
 			if( $post_data && $type == 'application/json' ) $this->log("{$bldpur}POST_DATA: ".trim($post_data)."\n");
 			$this->log("{$bldylw}<<<<: µT=".( $mend - $mstart )."{$txtrst}\n");
 			$this->log("{$bldylw}<<<<: H:".$this->headers."{$txtrst}");
 			$this->log("{$bldylw}<<<<: B:".$this->body."{$txtrst}");
+
+			// 404 is an accepted response, but others should be an exception
+			if (!stristr($this->headers, '404 Object Not Found')) {
+				if(preg_match('/HTTP\/\d\.\d (\d+) (.*)/', explode("\r\n", $this->headers)[0], $matches)) {
+					throw new RiakException($matches[2], $matches[1]);
+				}
+
+				throw new RiakException($this->headers, 500);
+			}
 		}
 		
 		if( $this->force_no_decode ) {
